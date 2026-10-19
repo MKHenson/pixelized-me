@@ -1,0 +1,112 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Hero from '../../components/Hero.astro';
+import ProjectTile from '../../components/ProjectTile.astro';
+import SiteFooter from '../../components/SiteFooter.astro';
+import { getProjects } from '../../lib/projects';
+
+const projects = await getProjects();
+const tags = [...new Set(projects.flatMap((p) => p.data.tags))].sort();
+---
+
+<Layout title="Work" description="Games, engines and tools I've built, newest first.">
+  <Hero current="projects" compact>
+    <h1>Work</h1>
+    <p class="intro">Games, engines and tools I've built, newest first.</p>
+  </Hero>
+
+  <main id="main" class="wrap section">
+    <div class="filters" role="group" aria-label="Filter by tag">
+      <button type="button" data-filter="all" aria-pressed="true">All</button>
+      {
+        tags.map((tag) => (
+          <button type="button" data-filter={tag} aria-pressed="false">
+            {tag}
+          </button>
+        ))
+      }
+    </div>
+    <ul class="tiles">
+      {
+        projects.map((project, i) => (
+          <li data-tags={project.data.tags.join(' ')}>
+            <ProjectTile project={project} index={i} headingLevel="h2" />
+          </li>
+        ))
+      }
+    </ul>
+  </main>
+
+  <SiteFooter />
+</Layout>
+
+<script>
+  const buttons = document.querySelectorAll<HTMLButtonElement>('[data-filter]');
+  const items = document.querySelectorAll<HTMLElement>('[data-tags]');
+
+  for (const button of buttons) {
+    button.addEventListener('click', () => {
+      const tag = button.dataset.filter;
+      for (const other of buttons) other.setAttribute('aria-pressed', String(other === button));
+      for (const item of items) {
+        item.hidden = tag !== 'all' && !item.dataset.tags?.split(' ').includes(tag ?? '');
+      }
+    });
+  }
+</script>
+
+<style>
+  h1 {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    letter-spacing: -0.035em;
+  }
+
+  .intro {
+    max-width: 560px;
+    margin-top: 12px;
+    color: var(--on-blue-muted);
+    font-size: 1.125rem;
+  }
+
+  .section {
+    padding-block: 32px 64px;
+  }
+
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  button {
+    min-height: 44px;
+    padding: 8px 18px;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ink);
+    font: inherit;
+    font-weight: 600;
+    text-transform: capitalize;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: var(--white);
+  }
+
+  button[aria-pressed='true'] {
+    background: var(--ink);
+    color: var(--white);
+  }
+
+  .tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+</style>

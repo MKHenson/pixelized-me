@@ -1,0 +1,113 @@
+---
+interface Props {
+  current?: 'home' | 'projects';
+  compact?: boolean;
+}
+
+const { current, compact = false } = Astro.props;
+---
+
+<div class:list={['hero', { compact }]}>
+  <header class="wrap header">
+    <a class="logo" href="/">
+      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
+        <path d="M2 24L14 2l12 22z" fill="var(--orange)"></path>
+        <path d="M14 2l12 22H14z" fill="var(--yellow)"></path>
+      </svg>
+      pixelized.me
+    </a>
+    <nav aria-label="Main">
+      <ul>
+        <li><a href="/projects/" aria-current={current === 'projects' ? 'page' : undefined}>Work</a></li>
+        <li><a href="/#about">About</a></li>
+        <li><a class="contact" href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <div class="wrap body">
+    <div class="text"><slot /></div>
+    <slot name="art" />
+  </div>
+</div>
+
+<style>
+  .hero {
+    overflow: hidden;
+    background: var(--blue);
+    color: var(--white);
+  }
+
+  .header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: space-between;
+    align-items: center;
+    padding-block: 16px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.25rem;
+    font-weight: 800;
+    text-decoration: none;
+  }
+
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-weight: 600;
+  }
+
+  nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    text-decoration: none;
+  }
+
+  nav a:hover,
+  nav a[aria-current='page'] {
+    background: var(--blue-light);
+  }
+
+  nav .contact {
+    padding-inline: 18px;
+    background: var(--white);
+    color: var(--ink);
+  }
+
+  nav .contact:hover {
+    background: var(--yellow);
+  }
+
+  .body {
+    display: flex;
+    gap: 32px;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-top: 24px;
+  }
+
+  .text {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding-bottom: 56px;
+  }
+
+  .compact .body {
+    padding-top: 8px;
+  }
+
+  .compact .text {
+    padding-bottom: 40px;
+  }
+</style>

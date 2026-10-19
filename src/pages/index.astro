@@ -1,0 +1,150 @@
+---
+import { Image } from 'astro:assets';
+import Layout from '../layouts/Layout.astro';
+import me from '../assets/me.jpg';
+import Hero from '../components/Hero.astro';
+import PolyArt from '../components/PolyArt.astro';
+import ProjectTile from '../components/ProjectTile.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import { getFeaturedProjects, getProjects } from '../lib/projects';
+
+const featured = await getFeaturedProjects(6);
+const total = (await getProjects()).length;
+
+/** Rows of two alternate wide|narrow and narrow|wide; an unpaired last tile spans the row. */
+function spanOf(i: number) {
+  if (i === featured.length - 1 && featured.length % 2 === 1) return 3;
+  const wideFirst = Math.floor(i / 2) % 2 === 0;
+  return wideFirst === (i % 2 === 0) ? 2 : 1;
+}
+---
+
+<Layout title="pixelized.me">
+  <Hero current="home">
+    <h1>Code, polygons &amp; playable worlds.</h1>
+    <p class="intro">[One or two lines about what you do and what you care about.]</p>
+    <PolyArt slot="art" />
+  </Hero>
+
+  <main id="main">
+    <section class="wrap section" aria-labelledby="work-heading">
+      <div class="section-head">
+        <h2 id="work-heading">Things I've made</h2>
+        <a class="pill" href="/projects/">All {total} projects →</a>
+      </div>
+      <ul class="tiles">
+        {
+          featured.map((project, i) => (
+            <li data-span={spanOf(i)}>
+              <ProjectTile project={project} index={i} variant="feature" wide={spanOf(i) > 1} />
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <section id="about" class="wrap section about" aria-labelledby="about-heading">
+      <Image src={me} alt="Mathew Henson" width={240} height={240} densities={[1, 2, 3]} class="photo" />
+      <div class="about-body">
+        <h2 id="about-heading">Hi, I'm Mat.</h2>
+        <p>[A short bio: where you've worked, what you build, what you're into outside code.]</p>
+      </div>
+    </section>
+  </main>
+
+  <SiteFooter />
+</Layout>
+
+<style>
+  h1 {
+    max-width: 14ch;
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    line-height: 0.95;
+    letter-spacing: -0.035em;
+  }
+
+  .intro {
+    max-width: 520px;
+    margin-top: 16px;
+    color: var(--on-blue-muted);
+    font-size: 1.125rem;
+  }
+
+  .section {
+    padding-block: 48px;
+  }
+
+  h2 {
+    font-size: 2.25rem;
+  }
+
+  .section-head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .section-head .pill:hover {
+    background: var(--ink);
+    color: var(--white);
+  }
+
+  .tiles {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  @media (min-width: 800px) {
+    .tiles {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .tiles > [data-span='2'] {
+      grid-column: span 2;
+    }
+
+    .tiles > [data-span='3'] {
+      grid-column: span 3;
+    }
+  }
+
+  .about {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    align-items: center;
+    padding-top: 16px;
+  }
+
+  .photo {
+    flex: 0 0 auto;
+    width: clamp(220px, 30vw, 300px);
+    height: auto;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border: 6px solid var(--pink);
+    border-radius: 50%;
+    background: var(--pink);
+  }
+
+  .about-body {
+    flex: 1 1 480px;
+    max-width: 760px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    color: var(--ink-muted);
+    font-size: 1.125rem;
+  }
+
+  .about-body h2 {
+    color: var(--ink);
+  }
+</style>

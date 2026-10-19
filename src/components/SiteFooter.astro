@@ -1,0 +1,57 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer id="contact" class="footer">
+  <div class="wrap content">
+    <h2>Let's make<br />something.</h2>
+    <ul>
+      <li><a class="pill pill-solid" href="#contact">[email]</a></li>
+      <li><a class="pill" href="https://github.com/MKHenson">GitHub</a></li>
+      <li><a class="pill" href="#contact">[LinkedIn]</a></li>
+    </ul>
+    <p class="copyright">© {year} Mathew Henson</p>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    background: var(--ink);
+    color: var(--white);
+  }
+
+  .content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding-block: 56px 32px;
+  }
+
+  h2 {
+    font-size: clamp(2rem, 4vw, 3.25rem);
+    letter-spacing: -0.03em;
+  }
+
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .pill:not(.pill-solid):hover {
+    background: var(--white);
+    color: var(--ink);
+  }
+
+  .pill-solid:hover {
+    background: var(--yellow);
+  }
+
+  .copyright {
+    color: var(--on-ink-muted);
+    font-size: 0.8125rem;
+  }
+</style>

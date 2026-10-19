@@ -1,0 +1,33 @@
+---
+interface Props {
+  /** A published deck URL from File → Share → Publish to web (the Link or the Embed tab). */
+  src: string;
+  title: string;
+}
+
+const { title } = Astro.props;
+
+if (!Astro.props.src.startsWith('https://docs.google.com/presentation/')) {
+  throw new Error(`GoogleSlides: "${Astro.props.src}" is not a Google Slides URL`);
+}
+
+const src = Astro.props.src.replace(/\/pub(\?|$)/, '/embed$1');
+---
+
+<div class="slides">
+  <iframe src={src} title={title} loading="lazy" allowfullscreen></iframe>
+</div>
+
+<style>
+  .slides {
+    aspect-ratio: 16 / 9;
+    background: var(--ink);
+  }
+
+  iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+</style>
