@@ -15,6 +15,8 @@ const projects = defineCollection({
       year: z.number().int(),
       yearEnd: z.number().int().optional(),
       status: z.enum(['released', 'in-development', 'prototype', 'archived']),
+      /** The company or studio the project was made at or for. */
+      studio: z.string().optional(),
       tags: z.array(z.string()).default([]),
       cover: image(),
       coverAlt: z.string(),

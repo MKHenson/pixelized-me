@@ -28,7 +28,7 @@ interface Props {
 
 const { project, newer, older, art } = Astro.props;
 const { Content } = await render(project);
-const { title, summary, cover, coverAlt, gallery, links, tags } = project.data;
+const { title, summary, cover, coverAlt, gallery, links, tags, studio } = project.data;
 
 // Show the cover only when the write-up does not already include it.
 const coverStem = cover.src.split('?')[0].split('/').pop()!.split('.')[0];
@@ -44,6 +44,14 @@ const texture = diamondLattice('rgba(201,162,74,0.16)', 40);
     <dl class="facts">
       <div><dt class="label">Status</dt><dd>{statusLabel(project)}</dd></div>
       <div><dt class="label">Year</dt><dd>{yearsOf(project)}</dd></div>
+      {
+        studio && (
+          <div>
+            <dt class="label">Studio</dt>
+            <dd>{studio}</dd>
+          </div>
+        )
+      }
       {
         tags.length > 0 && (
           <div>
@@ -284,6 +292,28 @@ const texture = diamondLattice('rgba(201,162,74,0.16)', 40);
   .prose :global(ol) {
     margin: 0;
     padding-left: 1.25em;
+  }
+
+  .prose :global(blockquote) {
+    margin: 0.5em 0;
+    padding: 20px 24px 20px 28px;
+    border-left: 4px double var(--gold);
+    background: var(--cream);
+    color: var(--ink);
+    font-size: 1.125rem;
+    line-height: 1.6;
+  }
+
+  .prose :global(blockquote > * + *) {
+    margin-top: 0.75em;
+  }
+
+  /* A closing line in a quote, such as the speaker's name, reads as an attribution. */
+  .prose :global(blockquote > p:last-child:not(:first-child)) {
+    color: var(--coral);
+    font-family: var(--font-pixel);
+    font-size: 0.8125rem;
+    text-transform: uppercase;
   }
 
   .prose :global(code) {
