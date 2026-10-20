@@ -1,0 +1,66 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.SCW_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.SCW_SECRET_KEY }}
+      AWS_DEFAULT_REGION: ${{ vars.SCW_REGION }}
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      S3_ENDPOINT: https://s3.${{ vars.SCW_REGION }}.scw.cloud
+      BUCKET: s3://${{ vars.SCW_BUCKET }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run check
+      - run: npm run build
+
+      # Hashed assets never change, so they can be cached forever.
+      - name: Upload assets
+        run: >
+          aws s3 sync dist/_astro "$BUCKET/_astro"
+          --endpoint-url "$S3_ENDPOINT"
+          --acl public-read
+          --cache-control "public, max-age=31536000, immutable"
+          --delete
+
+      # Pages and unhashed files must be revalidated so updates show immediately.
+      - name: Upload pages
+        run: >
+          aws s3 sync dist "$BUCKET"
+          --endpoint-url "$S3_ENDPOINT"
+          --acl public-read
+          --cache-control "public, max-age=0, must-revalidate"
+          --exclude "_astro/*"
+          --delete
+
+      - name: Purge Edge Services cache
+        if: vars.SCW_EDGE_PIPELINE_ID != ''
+        run: |
+          curl --fail-with-body -sS -X POST \
+            -H "X-Auth-Token: ${{ secrets.SCW_SECRET_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"pipeline_id": "${{ vars.SCW_EDGE_PIPELINE_ID }}", "all": true}' \
+            https://api.scaleway.com/edge-services/v1beta1/purge-requests

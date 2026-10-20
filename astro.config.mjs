@@ -5,7 +5,7 @@ import mdx from '@astrojs/mdx';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://pixelized.me',
+  site: 'https://www.pixelized.me',
   integrations: [mdx()],
   fonts: [
     {
