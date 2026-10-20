@@ -8,14 +8,14 @@ import GoogleSlides from '../../components/GoogleSlides.astro';
 import Exhibit from '../../components/Exhibit.astro';
 import DecoMotif from '../../components/DecoMotif.astro';
 import DecoRule from '../../components/DecoRule.astro';
-import { getProjects, statusLabel, yearsOf, type Project } from '../../lib/projects';
+import { HEADER_ART, getProjects, statusLabel, yearsOf, type Project } from '../../lib/projects';
 import { diamondLattice } from '../../lib/patterns';
 
 export async function getStaticPaths() {
   const projects = await getProjects();
   return projects.map((project, i) => ({
     params: { slug: project.id },
-    props: { project, newer: projects[i - 1], older: projects[i + 1] },
+    props: { project, newer: projects[i - 1], older: projects[i + 1], art: HEADER_ART[i % HEADER_ART.length] },
   }));
 }
 
@@ -23,9 +23,10 @@ interface Props {
   project: Project;
   newer?: Project;
   older?: Project;
+  art: (typeof HEADER_ART)[number];
 }
 
-const { project, newer, older } = Astro.props;
+const { project, newer, older, art } = Astro.props;
 const { Content } = await render(project);
 const { title, summary, cover, coverAlt, gallery, links, tags } = project.data;
 
@@ -64,7 +65,7 @@ const texture = diamondLattice('rgba(201,162,74,0.16)', 40);
         )
       }
     </dl>
-    <DecoMotif slot="art" seed={project.id} class="art" />
+    <DecoMotif slot="art" seed={project.id} kind={art} class="art" />
   </Hero>
 
   <main id="main" class="page" style={`--texture:${texture}`}>
@@ -188,7 +189,7 @@ const texture = diamondLattice('rgba(201,162,74,0.16)', 40);
 
   :global(.hero .art) {
     flex: 0 0 auto;
-    width: clamp(260px, 36vw, 440px);
+    width: clamp(220px, 28vw, 350px);
     margin-bottom: -2px;
   }
 

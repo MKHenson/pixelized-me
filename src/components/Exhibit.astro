@@ -19,7 +19,7 @@ const natural = typeof src === 'string' ? undefined : src.width;
 const shown = natural ? Math.min(Math.round(natural * 1.25), 780) : undefined;
 ---
 
-<Frame caption={title ?? alt} width={shown} class="exhibit">
+<Frame caption={[title ?? alt, natural && `${natural}×${(src as ImageMetadata).height}`].filter(Boolean).join(' · ')} width={shown} class="exhibit">
   {
     typeof src === 'string' ? (
       <img src={src} alt={alt} loading="lazy" decoding="async" />

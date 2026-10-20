@@ -90,11 +90,13 @@ svg {
   padding-inline: var(--gutter);
 }
 
-/* Small capitals with wide tracking, the deco label style. */
+/* Small labels in a pixel font: the data plates of the site. */
 .label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.18em;
+  font-family: var(--font-pixel);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
   text-transform: uppercase;
 }
 

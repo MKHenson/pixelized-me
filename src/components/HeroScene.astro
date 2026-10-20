@@ -1,0 +1,245 @@
+---
+import DecoMotif from './DecoMotif.astro';
+
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<!--
+  A slowly turning ziggurat and gem, drawn with WebGL at a quarter of the display resolution
+  and scaled up with hard pixels. The static sunrise shows until WebGL starts, and stays if it cannot.
+-->
+<div class:list={['stage', className]}>
+  <DecoMotif seed="home" kind="halo" class="halo" />
+  <canvas aria-hidden="true"></canvas>
+  <DecoMotif seed="home" kind="sunrise" accent="var(--coral)" class="fallback" />
+</div>
+
+<script>
+  /** Display pixels per rendered pixel. */
+  const PIXEL = 4;
+
+  const hex = (value: string) => {
+    const n = parseInt(value.replace('#', ''), 16);
+    return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
+  };
+
+  const STONE = ['#132c3a', '#10454a', '#1b6466'].map(hex);
+  const GEM = ['#8f3520', '#e2603f', '#f6a283'].map(hex);
+  const EDGE = hex('#e4c77e');
+
+  const vertexSource = `
+    attribute vec3 aPos;
+    attribute vec3 aNormal;
+    uniform float uYaw, uPitch, uSpin, uAspect, uLift;
+    varying vec3 vNormal;
+    mat3 rotY(float a) { float c = cos(a), s = sin(a); return mat3(c, 0., -s, 0., 1., 0., s, 0., c); }
+    mat3 rotX(float a) { float c = cos(a), s = sin(a); return mat3(1., 0., 0., 0., c, s, 0., -s, c); }
+    void main() {
+      mat3 view = rotX(uPitch) * rotY(uYaw);
+      mat3 model = rotY(uSpin);
+      vec3 p = view * (model * aPos + vec3(0., uLift, 0.));
+      vNormal = view * model * aNormal;
+      p.y += 0.2;
+      p.z -= 7.0;
+      float f = 2.6;
+      gl_Position = vec4(p.x * f / uAspect, p.y * f, p.z * -1.01005 - 0.20101, -p.z);
+    }`;
+
+  const fragmentSource = `
+    precision mediump float;
+    varying vec3 vNormal;
+    uniform vec3 uDark, uMid, uLight, uEdge;
+    uniform float uIsEdge;
+    void main() {
+      if (uIsEdge > 0.5) { gl_FragColor = vec4(uEdge, 1.); return; }
+      float d = max(dot(normalize(vNormal), normalize(vec3(-0.55, 0.8, 0.6))), 0.);
+      // Three flat tones, no gradients: shading the way a pixel artist would.
+      vec3 c = d > 0.72 ? uLight : d > 0.32 ? uMid : uDark;
+      gl_FragColor = vec4(c, 1.);
+    }`;
+
+  type Mesh = { faces: number[]; edges: number[] };
+
+  function box(mesh: Mesh, y0: number, y1: number, h: number) {
+    const corners = [
+      [-h, y0, -h], [h, y0, -h], [h, y0, h], [-h, y0, h],
+      [-h, y1, -h], [h, y1, -h], [h, y1, h], [-h, y1, h],
+    ];
+    const quads: [number[], number[]][] = [
+      [[4, 5, 6, 7], [0, 1, 0]], [[3, 2, 1, 0], [0, -1, 0]],
+      [[0, 1, 5, 4], [0, 0, -1]], [[2, 3, 7, 6], [0, 0, 1]],
+      [[1, 2, 6, 5], [1, 0, 0]], [[3, 0, 4, 7], [-1, 0, 0]],
+    ];
+    for (const [[a, b, c, d], n] of quads) {
+      for (const i of [a, b, c, a, c, d]) mesh.faces.push(...corners[i], ...n);
+    }
+    const lines = [0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7];
+    for (const i of lines) mesh.edges.push(...corners[i], 0, 0, 0);
+  }
+
+  function octahedron(mesh: Mesh, r: number, height: number) {
+    const top = [0, height, 0];
+    const bottom = [0, -height, 0];
+    const ring = [[r, 0, 0], [0, 0, r], [-r, 0, 0], [0, 0, -r]];
+    for (let i = 0; i < 4; i++) {
+      const a = ring[i];
+      const b = ring[(i + 1) % 4];
+      for (const [tip, first, second] of [[top, b, a], [bottom, a, b]]) {
+        const u = first.map((v, k) => v - tip[k]);
+        const w = second.map((v, k) => v - tip[k]);
+        const n = [u[1] * w[2] - u[2] * w[1], u[2] * w[0] - u[0] * w[2], u[0] * w[1] - u[1] * w[0]];
+        mesh.faces.push(...tip, ...n, ...first, ...n, ...second, ...n);
+      }
+      mesh.edges.push(...top, 0, 0, 0, ...a, 0, 0, 0, ...bottom, 0, 0, 0, ...a, 0, 0, 0, ...a, 0, 0, 0, ...b, 0, 0, 0);
+    }
+  }
+
+  function start(stage: HTMLElement) {
+    const canvas = stage.querySelector('canvas')!;
+    const gl = canvas.getContext('webgl', { antialias: false, alpha: true, premultipliedAlpha: false });
+    if (!gl) return;
+
+    const compile = (type: number, source: string) => {
+      const shader = gl.createShader(type)!;
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+      return shader;
+    };
+    const program = gl.createProgram()!;
+    gl.attachShader(program, compile(gl.VERTEX_SHADER, vertexSource));
+    gl.attachShader(program, compile(gl.FRAGMENT_SHADER, fragmentSource));
+    gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return;
+    gl.useProgram(program);
+
+    const u = (name: string) => gl.getUniformLocation(program, name);
+    const aPos = gl.getAttribLocation(program, 'aPos');
+    const aNormal = gl.getAttribLocation(program, 'aNormal');
+
+    const upload = (data: number[]) => {
+      const buffer = gl.createBuffer()!;
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
+      return { buffer, count: data.length / 6 };
+    };
+
+    const ziggurat: Mesh = { faces: [], edges: [] };
+    [1.5, 1.15, 0.8, 0.45].forEach((half, i) => box(ziggurat, -1.55 + i * 0.42, -1.55 + (i + 1) * 0.42, half));
+    const gem: Mesh = { faces: [], edges: [] };
+    octahedron(gem, 0.5, 0.74);
+
+    const parts = [
+      { faces: upload(ziggurat.faces), edges: upload(ziggurat.edges), colors: STONE, spin: 0.22, lift: 0 },
+      { faces: upload(gem.faces), edges: upload(gem.edges), colors: GEM, spin: -0.9, lift: 1.05 },
+    ];
+
+    const bind = (buffer: WebGLBuffer) => {
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.enableVertexAttribArray(aPos);
+      gl.vertexAttribPointer(aPos, 3, gl.FLOAT, false, 24, 0);
+      gl.enableVertexAttribArray(aNormal);
+      gl.vertexAttribPointer(aNormal, 3, gl.FLOAT, false, 24, 12);
+    };
+
+    gl.enable(gl.DEPTH_TEST);
+    gl.uniform3fv(u('uEdge'), EDGE);
+
+    const resize = () => {
+      const { width, height } = canvas.getBoundingClientRect();
+      canvas.width = Math.max(1, Math.round(width / PIXEL));
+      canvas.height = Math.max(1, Math.round(height / PIXEL));
+      gl.viewport(0, 0, canvas.width, canvas.height);
+    };
+    new ResizeObserver(resize).observe(canvas);
+    resize();
+
+    // The mouse leans the camera a little. Eased, so it drifts, not snaps.
+    const target = { yaw: 0, pitch: 0 };
+    const eased = { yaw: 0, pitch: 0 };
+    window.addEventListener('pointermove', (e) => {
+      target.yaw = (e.clientX / window.innerWidth - 0.5) * 0.7;
+      target.pitch = (e.clientY / window.innerHeight - 0.5) * 0.25;
+    });
+
+    const draw = (t: number) => {
+      eased.yaw += (target.yaw - eased.yaw) * 0.05;
+      eased.pitch += (target.pitch - eased.pitch) * 0.05;
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      gl.uniform1f(u('uAspect'), canvas.width / canvas.height);
+      gl.uniform1f(u('uYaw'), eased.yaw);
+      gl.uniform1f(u('uPitch'), 0.38 + eased.pitch);
+      for (const part of parts) {
+        gl.uniform1f(u('uSpin'), t * part.spin + 0.6);
+        gl.uniform1f(u('uLift'), part.lift + (part.lift ? Math.sin(t * 1.6) * 0.07 : 0));
+        gl.uniform3fv(u('uDark'), part.colors[0]);
+        gl.uniform3fv(u('uMid'), part.colors[1]);
+        gl.uniform3fv(u('uLight'), part.colors[2]);
+        // Push faces back a little so the gold edges on top of them win the depth test.
+        gl.enable(gl.POLYGON_OFFSET_FILL);
+        gl.polygonOffset(1, 1);
+        gl.uniform1f(u('uIsEdge'), 0);
+        bind(part.faces.buffer);
+        gl.drawArrays(gl.TRIANGLES, 0, part.faces.count);
+        gl.disable(gl.POLYGON_OFFSET_FILL);
+        gl.uniform1f(u('uIsEdge'), 1);
+        bind(part.edges.buffer);
+        gl.drawArrays(gl.LINES, 0, part.edges.count);
+      }
+    };
+
+    stage.classList.add('live');
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      draw(0);
+      return;
+    }
+
+    let visible = true;
+    new IntersectionObserver(([entry]) => (visible = entry.isIntersecting)).observe(stage);
+    const begin = performance.now();
+    const frame = (now: number) => {
+      if (visible) draw((now - begin) / 1000);
+      requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+  }
+
+  for (const stage of document.querySelectorAll<HTMLElement>('.stage')) start(stage);
+</script>
+
+<style>
+  .stage {
+    position: relative;
+    aspect-ratio: 520 / 360;
+  }
+
+  .stage > :global(*) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  canvas {
+    image-rendering: pixelated;
+    visibility: hidden;
+  }
+
+  .stage :global(.halo) {
+    visibility: hidden;
+  }
+
+  .stage.live canvas,
+  .stage.live :global(.halo) {
+    visibility: visible;
+  }
+
+  .stage.live :global(.fallback) {
+    visibility: hidden;
+  }
+</style>

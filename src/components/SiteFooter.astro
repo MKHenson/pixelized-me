@@ -18,7 +18,7 @@ const band = chevronBand('#c9a24a');
       </ul>
       <p class="copyright label">© {year} Mathew Henson</p>
     </div>
-    <DecoMotif seed="footer" kind="sunrise" class="art" />
+    <DecoMotif seed="footer" kind="skull" class="art" />
   </div>
 </footer>
 
@@ -84,13 +84,14 @@ const band = chevronBand('#c9a24a');
     color: var(--on-dark-muted);
   }
 
-  .art {
+  /* The artwork is a child component, so its class needs :global to take these sizes. */
+  .content > :global(.art) {
     flex: 0 1 auto;
-    width: clamp(220px, 30vw, 360px);
+    width: clamp(200px, 24vw, 300px);
   }
 
   @media (max-width: 700px) {
-    .art {
+    .content > :global(.art) {
       display: none;
     }
   }

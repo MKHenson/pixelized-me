@@ -2,6 +2,9 @@ import { getCollection, type CollectionEntry } from 'astro:content';
 
 export type Project = CollectionEntry<'projects'>;
 
+/** Project header artwork, cycled in list order so neighbouring projects never share one. */
+export const HEADER_ART = ['sunrise', 'skull', 'fan', 'ziggurat', 'arches'] as const;
+
 const statusLabels: Record<Project['data']['status'], string> = {
   released: 'Released',
   'in-development': 'In development',

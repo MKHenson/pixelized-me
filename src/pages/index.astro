@@ -3,7 +3,7 @@ import { Image } from 'astro:assets';
 import Layout from '../layouts/Layout.astro';
 import me from '../assets/me.jpg';
 import Hero from '../components/Hero.astro';
-import DecoMotif from '../components/DecoMotif.astro';
+import HeroScene from '../components/HeroScene.astro';
 import DecoRule from '../components/DecoRule.astro';
 import SiteFooter from '../components/SiteFooter.astro';
 import { getProjects, statusLabel, yearsOf } from '../lib/projects';
@@ -21,7 +21,7 @@ const tealScales = fanScales('#10454a', 'rgba(228,199,126,0.22)', 40);
     <p class="label kicker">Mathew Henson</p>
     <h1>Code, polygons &amp; playable worlds.</h1>
     <p class="intro">[One or two lines about what you do and what you care about.]</p>
-    <DecoMotif slot="art" seed="home" kind="sunrise" accent="var(--coral)" class="art" />
+    <HeroScene slot="art" class="art" />
   </Hero>
 
   <main id="main" style={`--texture:${texture}`}>
