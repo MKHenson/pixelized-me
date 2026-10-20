@@ -1,0 +1,156 @@
+---
+import { pick, seededRandom } from '../lib/seed';
+
+interface Props {
+  /** Seeds the composition. The same key always draws the same artwork. */
+  seed: string;
+  /** Forces one composition instead of the seeded choice. */
+  kind?: Kind;
+  /** Forces the accent colour instead of the seeded choice. */
+  accent?: string;
+  class?: string;
+}
+
+type Kind = 'sunrise' | 'fan' | 'ziggurat' | 'arches';
+
+const { seed, class: className } = Astro.props;
+const maskId = `motif-fade-${seed.replace(/[^\w-]/g, '')}`;
+const random = seededRandom(seed);
+const kind: Kind = Astro.props.kind ?? pick(random, ['sunrise', 'fan', 'ziggurat', 'arches'] as const);
+const seededAccent = pick(random, ['var(--coral)', 'var(--teal-light)', 'var(--gold)'] as const);
+const accent = Astro.props.accent ?? seededAccent;
+const second = accent === 'var(--teal-light)' ? 'var(--coral)' : 'var(--teal-light)';
+
+const W = 520;
+const H = 360;
+const gold = 'var(--gold)';
+const r = (n: number) => Math.round(n * 10) / 10;
+
+/** `fade` shapes sit under a radial mask, so long rays dissolve before the edge of the artwork. */
+type Shape = { d: string; fill?: string; stroke?: string; width?: number; opacity?: number; fade?: boolean };
+const shapes: Shape[] = [];
+
+/** Wedges radiating from a point between two angles, alternately filled. */
+const rayOrigin = { x: W / 2, y: H };
+
+function rays(cx: number, cy: number, from: number, to: number, count: number, length: number, fill: string, opacity: number) {
+  rayOrigin.x = cx;
+  rayOrigin.y = cy;
+  const step = (to - from) / count;
+  for (let i = 0; i < count; i += 2) {
+    const a0 = from + i * step;
+    const a1 = a0 + step;
+    shapes.push({
+      d: `M${cx} ${cy}L${r(cx + length * Math.cos(a0))} ${r(cy + length * Math.sin(a0))}L${r(cx + length * Math.cos(a1))} ${r(cy + length * Math.sin(a1))}Z`,
+      fill,
+      opacity,
+      fade: true,
+    });
+  }
+}
+
+/** An arc of a circle between two angles, as an open stroke. */
+function arc(cx: number, cy: number, radius: number, from: number, to: number) {
+  const large = to - from > Math.PI ? 1 : 0;
+  return `M${r(cx + radius * Math.cos(from))} ${r(cy + radius * Math.sin(from))}A${radius} ${radius} 0 ${large} 1 ${r(cx + radius * Math.cos(to))} ${r(cy + radius * Math.sin(to))}`;
+}
+
+/** A stepped block, widest at the bottom. */
+function steps(cx: number, base: number, width: number, stepWidth: number, stepHeight: number, count: number) {
+  let d = '';
+  for (let i = 0; i < count; i++) {
+    const half = width / 2 - i * stepWidth;
+    const y = base - i * stepHeight;
+    d += `M${r(cx - half)} ${y}H${r(cx + half)}V${y - stepHeight}H${r(cx - half)}Z`;
+  }
+  return d;
+}
+
+if (kind === 'sunrise') {
+  const cx = W / 2;
+  // The sun rises from the top of a three-step base.
+  const cy = H - 3 * 14;
+  rays(cx, cy, Math.PI, 2 * Math.PI, 18 + 2 * Math.floor(random() * 6), 560, accent, 0.28);
+  for (const radius of [110, 150, 190, 230]) shapes.push({ d: arc(cx, cy, radius, Math.PI, 2 * Math.PI), stroke: gold, width: 1.5 });
+  shapes.push({ d: `M${cx - 80} ${cy}A80 80 0 0 1 ${cx + 80} ${cy}Z`, fill: accent });
+  shapes.push({ d: `M${cx - 56} ${cy}A56 56 0 0 1 ${cx + 56} ${cy}Z`, fill: 'none', stroke: 'var(--navy)', width: 3 });
+  shapes.push({ d: steps(cx, H, 520, 70, 14, 3), fill: 'var(--navy-light)', stroke: gold, width: 1.5 });
+}
+
+if (kind === 'fan') {
+  const right = random() > 0.5;
+  const cx = right ? W : 0;
+  const cy = H;
+  const from = right ? Math.PI : 1.5 * Math.PI;
+  const to = right ? 1.5 * Math.PI : 2 * Math.PI;
+  rays(cx, cy, from, to, 14, 420, accent, 0.4);
+  for (const radius of [120, 190, 260, 330]) shapes.push({ d: arc(cx, cy, radius, from, to), stroke: gold, width: radius === 330 ? 3 : 1.5 });
+  const ribs = 7;
+  for (let i = 0; i <= ribs; i++) {
+    const a = from + ((to - from) * i) / ribs;
+    shapes.push({ d: `M${cx} ${cy}L${r(cx + 330 * Math.cos(a))} ${r(cy + 330 * Math.sin(a))}`, stroke: gold, width: 1 });
+  }
+  shapes.push({ d: `${arc(cx, cy, 60, from, to)}L${cx} ${cy}Z`, fill: second });
+}
+
+if (kind === 'ziggurat') {
+  const cx = W / 2;
+  const apex = 150;
+  rays(cx, apex, Math.PI, 2 * Math.PI, 22, 420, accent, 0.45);
+  shapes.push({ d: `M${cx - 46} ${apex}A46 46 0 0 1 ${cx + 46} ${apex}Z`, fill: accent });
+  shapes.push({ d: steps(cx, H, 440, 44, 42, 5), fill: 'var(--navy-light)', stroke: gold, width: 1.5 });
+  for (let i = 0; i < 5; i++) {
+    const y = H - i * 42 - 21;
+    shapes.push({ d: `M${cx - 10} ${y}L${cx} ${y - 10}L${cx + 10} ${y}L${cx} ${y + 10}Z`, fill: gold });
+  }
+}
+
+if (kind === 'arches') {
+  const cx = W / 2;
+  const widths = [340, 270, 200, 130, 64];
+  const fills = ['var(--navy-light)', second, 'var(--navy)', accent, 'var(--navy)'];
+  widths.forEach((width, i) => {
+    const half = width / 2;
+    const top = 60 + i * 34;
+    shapes.push({ d: `M${cx - half} ${H}V${top + half}A${half} ${half} 0 0 1 ${cx + half} ${top + half}V${H}Z`, fill: fills[i], stroke: gold, width: 1.5 });
+  });
+  shapes.push({ d: `M${cx} 18l14 14-14 14-14-14z`, fill: gold });
+  for (const x of [cx - 220, cx + 220]) {
+    shapes.push({ d: `M${x - 14} ${H}V140H${x + 14}V${H}`, fill: 'var(--navy-light)', stroke: gold, width: 1.5 });
+    shapes.push({ d: `M${x - 22} 140H${x + 22}`, stroke: gold, width: 3 });
+  }
+}
+---
+
+<svg class:list={['motif', className]} viewBox={`0 0 ${W} ${H}`} aria-hidden="true" data-kind={kind}>
+  <defs>
+    <radialGradient
+      id={`${maskId}-g`}
+      gradientUnits="userSpaceOnUse"
+      cx={rayOrigin.x}
+      cy={rayOrigin.y}
+      r={Math.min(rayOrigin.y, Math.max(rayOrigin.x, W - rayOrigin.x))}
+    >
+      <stop offset="0.45" stop-color="#fff"></stop>
+      <stop offset="1" stop-color="#000"></stop>
+    </radialGradient>
+    <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width={W} height={H}>
+      <rect width={W} height={H} fill={`url(#${maskId}-g)`}></rect>
+    </mask>
+  </defs>
+  <g mask={`url(#${maskId})`}>
+    {shapes.filter((s) => s.fade).map((s) => <path d={s.d} fill={s.fill} opacity={s.opacity} />)}
+  </g>
+  {
+    shapes
+      .filter((s) => !s.fade)
+      .map((s) => <path d={s.d} fill={s.fill ?? 'none'} stroke={s.stroke} stroke-width={s.width} opacity={s.opacity} />)
+  }
+</svg>
+
+<style>
+  .motif {
+    width: 100%;
+    height: auto;
+  }
+</style>

@@ -2,54 +2,45 @@
 import { Image } from 'astro:assets';
 import { statusLabel, yearsOf, type Project } from '../lib/projects';
 
-export const tones = ['blue', 'orange', 'yellow', 'white', 'pink'] as const;
+export const tones = ['navy', 'teal', 'cream'] as const;
 
 interface Props {
   project: Project;
   index: number;
   headingLevel?: 'h2' | 'h3';
-  /** `feature` is the larger bento tile; `card` is the compact grid card. */
-  variant?: 'feature' | 'card';
-  /** Feature tiles only: lays the image beside the text instead of above it. */
-  wide?: boolean;
 }
 
-const { project, index, headingLevel: Heading = 'h3', variant = 'card', wide = false } = Astro.props;
+const { project, index, headingLevel: Heading = 'h3' } = Astro.props;
 const { title, summary, cover, coverAlt } = project.data;
 const tone = tones[index % tones.length];
-
-const sizes = {
-  card: '(min-width: 1100px) 360px, (min-width: 700px) 50vw, 100vw',
-  feature: '(min-width: 1440px) 460px, (min-width: 800px) 33vw, 100vw',
-  wide: '(min-width: 1440px) 840px, (min-width: 800px) 60vw, 100vw',
-};
-const imageSizes = variant === 'card' ? sizes.card : wide ? sizes.wide : sizes.feature;
 ---
 
-<article class:list={['tile', `tone-${tone}`, variant, { wide }]}>
+<article class:list={['tile', 'stepped', `tone-${tone}`]}>
   <div class="media">
-    <Image src={cover} alt={coverAlt} widths={[480, 800, 1200, 1680]} sizes={imageSizes} class="cover" />
+    <Image
+      src={cover}
+      alt={coverAlt}
+      widths={[480, 800]}
+      sizes="(min-width: 1184px) 360px, (min-width: 700px) 50vw, 100vw"
+      class="cover"
+    />
   </div>
   <div class="body">
-    <span class="tag">{statusLabel(project)}</span>
+    <p class="label meta">{statusLabel(project)} · {yearsOf(project)}</p>
     <Heading class="title">
       <a href={`/projects/${project.id}/`}>{title}</a>
     </Heading>
     <p class="summary">{summary}</p>
-    <p class="year">{yearsOf(project)}</p>
   </div>
 </article>
 
 <style>
   .tile {
+    --step: 8px;
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 16px;
     height: 100%;
-    padding: 10px;
-    border-radius: var(--radius);
-    color: var(--ink);
     transition: transform 150ms ease;
   }
 
@@ -57,34 +48,27 @@ const imageSizes = variant === 'card' ? sizes.card : wide ? sizes.wide : sizes.f
     transform: translateY(-4px);
   }
 
-  .tone-blue {
-    background: var(--blue);
-    color: var(--white);
+  .tone-navy {
+    background: var(--navy);
+    color: var(--on-dark);
   }
 
-  .tone-orange {
-    background: var(--orange);
+  .tone-teal {
+    background: var(--teal);
+    color: var(--on-dark);
   }
 
-  .tone-yellow {
-    background: var(--yellow);
-  }
-
-  .tone-white {
-    background: var(--white);
-    border: 2px solid var(--ink);
-  }
-
-  .tone-pink {
-    background: var(--pink);
+  .tone-cream {
+    background: var(--cream);
+    color: var(--ink);
   }
 
   .media {
     position: relative;
     overflow: hidden;
     aspect-ratio: 16 / 10;
-    border-radius: calc(var(--radius) - 6px);
-    background: rgb(0 0 0 / 0.15);
+    border-bottom: 3px double var(--gold);
+    background: rgb(0 0 0 / 0.2);
   }
 
   .cover {
@@ -98,23 +82,24 @@ const imageSizes = variant === 'card' ? sizes.card : wide ? sizes.wide : sizes.f
   .body {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
     flex-grow: 1;
-    padding: 0 10px 10px;
+    padding: 20px 24px 28px;
   }
 
-  .tag {
-    background: var(--ink);
-    color: var(--white);
+  .meta {
+    color: var(--gold);
   }
 
-  .tone-blue .tag {
-    background: var(--white);
-    color: var(--blue);
+  .tone-cream .meta {
+    color: var(--coral);
   }
 
   .title {
-    font-size: 1.5rem;
+    font-family: var(--font-display);
+    font-size: 1.625rem;
+    font-weight: 400;
+    text-wrap: balance;
   }
 
   .title a {
@@ -125,7 +110,6 @@ const imageSizes = variant === 'card' ? sizes.card : wide ? sizes.wide : sizes.f
     content: '';
     position: absolute;
     inset: 0;
-    border-radius: var(--radius);
   }
 
   .summary {
@@ -134,64 +118,12 @@ const imageSizes = variant === 'card' ? sizes.card : wide ? sizes.wide : sizes.f
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
     line-clamp: 3;
+    color: var(--on-dark-muted);
     font-size: 0.9375rem;
-    line-height: 1.45;
+    line-height: 1.5;
   }
 
-  .tone-blue .summary {
-    color: var(--on-blue-muted);
-  }
-
-  .year {
-    margin-top: auto;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    opacity: 0.8;
-  }
-
-  .feature {
-    padding: 12px;
-  }
-
-  .feature .body {
-    padding: 4px 16px 16px;
-  }
-
-  .feature .title {
-    margin-top: auto;
-    padding-top: 12px;
-    font-size: clamp(1.5rem, 2.4vw, 2.25rem);
-  }
-
-  .feature .summary {
-    max-width: 52ch;
-    font-size: 1rem;
-  }
-
-  .feature .year {
-    margin-top: 4px;
-  }
-
-  @media (min-width: 800px) {
-    .feature.wide {
-      flex-direction: row-reverse;
-      min-height: 300px;
-    }
-
-    .feature.wide .media {
-      flex: 1.5 1 0;
-      aspect-ratio: auto;
-    }
-
-    .feature.wide .body {
-      flex: 1 1 0;
-      padding: 16px 12px 16px 20px;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .tile {
-      transition: none;
-    }
+  .tone-cream .summary {
+    color: var(--ink-muted);
   }
 </style>

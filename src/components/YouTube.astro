@@ -1,4 +1,6 @@
 ---
+import Frame from './Frame.astro';
+
 interface Props {
   id: string;
   title: string;
@@ -7,16 +9,35 @@ interface Props {
 const { id, title } = Astro.props;
 ---
 
+<Frame caption={title}>
 <youtube-embed data-id={id} data-title={title}>
   <a href={`https://www.youtube.com/watch?v=${id}`} aria-label={`Play video: ${title}`}>
-    <img src={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`} alt="" loading="lazy" decoding="async" />
+    <img
+      src={`https://i.ytimg.com/vi/${id}/maxresdefault.jpg`}
+      data-fallback={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`}
+      alt=""
+      loading="lazy"
+      decoding="async"
+    />
     <span class="play" aria-hidden="true"></span>
   </a>
 </youtube-embed>
+</Frame>
 
 <script>
   class YouTubeEmbed extends HTMLElement {
     connectedCallback() {
+      // Not every video has a 1280px thumbnail. For those YouTube sends a 120px grey placeholder.
+      const img = this.querySelector('img');
+      const check = () => {
+        if (img && img.naturalWidth < 200 && img.dataset.fallback) {
+          img.src = img.dataset.fallback;
+          delete img.dataset.fallback;
+        }
+      };
+      if (img?.complete) check();
+      img?.addEventListener('load', check);
+      img?.addEventListener('error', check);
       this.querySelector('a')?.addEventListener(
         'click',
         (e) => {
@@ -60,15 +81,33 @@ const { id, title } = Astro.props;
   .play {
     position: absolute;
     inset: 50% auto auto 50%;
-    width: 72px;
-    height: 52px;
+    width: 84px;
+    height: 84px;
     transform: translate(-50%, -50%);
-    background: rgb(0 0 0 / 0.75);
+    border: 2px solid var(--gold);
+    border-radius: 50%;
+    background: rgb(15 26 44 / 0.85);
+    box-shadow: 0 0 0 6px rgb(15 26 44 / 0.5);
+  }
+
+  .play::after {
+    content: '';
+    position: absolute;
+    inset: 50% auto auto 54%;
+    width: 26px;
+    height: 30px;
+    transform: translate(-50%, -50%);
+    background: var(--gold);
     clip-path: polygon(0 0, 100% 50%, 0 100%);
   }
 
   a:hover .play,
   a:focus-visible .play {
-    background: #fff;
+    background: var(--gold);
+  }
+
+  a:hover .play::after,
+  a:focus-visible .play::after {
+    background: var(--navy);
   }
 </style>

@@ -1,35 +1,60 @@
 ---
+import { chevronBand } from '../lib/patterns';
+import DecoMotif from './DecoMotif.astro';
+
 const year = new Date().getFullYear();
+const band = chevronBand('#c9a24a');
 ---
 
-<footer id="contact" class="footer">
+<footer id="contact" class="footer" style={`--band:${band}`}>
+  <div class="band" aria-hidden="true"></div>
   <div class="wrap content">
-    <h2>Let's make<br />something.</h2>
-    <ul>
-      <li><a class="pill pill-solid" href="#contact">[email]</a></li>
-      <li><a class="pill" href="https://github.com/MKHenson">GitHub</a></li>
-      <li><a class="pill" href="#contact">[LinkedIn]</a></li>
-    </ul>
-    <p class="copyright">© {year} Mathew Henson</p>
+    <div class="text">
+      <h2>Let's make<br />something.</h2>
+      <ul>
+        <li><a class="pill pill-solid" href="#contact">[email]</a></li>
+        <li><a class="pill" href="https://github.com/MKHenson">GitHub</a></li>
+        <li><a class="pill" href="#contact">[LinkedIn]</a></li>
+      </ul>
+      <p class="copyright label">© {year} Mathew Henson</p>
+    </div>
+    <DecoMotif seed="footer" kind="sunrise" class="art" />
   </div>
 </footer>
 
 <style>
   .footer {
-    background: var(--ink);
-    color: var(--white);
+    overflow: hidden;
+    background: var(--navy);
+    color: var(--on-dark);
+  }
+
+  .band {
+    height: 14px;
+    background-image: var(--band);
+    background-repeat: repeat-x;
+    border-bottom: 2px solid var(--gold);
+    box-shadow: 0 -4px 0 0 var(--navy), 0 -6px 0 0 var(--gold);
+    margin-top: 6px;
   }
 
   .content {
     display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 32px;
+  }
+
+  .text {
+    flex: 1 0 auto;
+    display: flex;
     flex-direction: column;
     gap: 24px;
-    padding-block: 56px 32px;
+    padding-block: 64px 40px;
   }
 
   h2 {
-    font-size: clamp(2rem, 4vw, 3.25rem);
-    letter-spacing: -0.03em;
+    font-size: clamp(2.25rem, 4.5vw, 3.5rem);
   }
 
   ul {
@@ -41,17 +66,32 @@ const year = new Date().getFullYear();
     list-style: none;
   }
 
+  .pill:not(.pill-solid) {
+    border-color: var(--gold);
+    color: var(--gold-light);
+  }
+
   .pill:not(.pill-solid):hover {
-    background: var(--white);
-    color: var(--ink);
+    background: var(--gold);
+    color: var(--navy);
   }
 
   .pill-solid:hover {
-    background: var(--yellow);
+    background: var(--gold-light);
   }
 
   .copyright {
-    color: var(--on-ink-muted);
-    font-size: 0.8125rem;
+    color: var(--on-dark-muted);
+  }
+
+  .art {
+    flex: 0 1 auto;
+    width: clamp(220px, 30vw, 360px);
+  }
+
+  @media (max-width: 700px) {
+    .art {
+      display: none;
+    }
   }
 </style>

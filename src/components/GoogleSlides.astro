@@ -1,4 +1,6 @@
 ---
+import Frame from './Frame.astro';
+
 interface Props {
   /** A published deck URL from File → Share → Publish to web (the Link or the Embed tab). */
   src: string;
@@ -14,14 +16,16 @@ if (!Astro.props.src.startsWith('https://docs.google.com/presentation/')) {
 const src = Astro.props.src.replace(/\/pub(\?|$)/, '/embed$1');
 ---
 
-<div class="slides">
-  <iframe src={src} title={title} loading="lazy" allowfullscreen></iframe>
-</div>
+<Frame caption={title}>
+  <div class="slides">
+    <iframe src={src} title={title} loading="lazy" allowfullscreen></iframe>
+  </div>
+</Frame>
 
 <style>
   .slides {
     aspect-ratio: 16 / 9;
-    background: var(--ink);
+    background: var(--navy);
   }
 
   iframe {

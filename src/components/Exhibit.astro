@@ -1,0 +1,30 @@
+---
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+import Frame from './Frame.astro';
+
+interface Props {
+  src: ImageMetadata | string;
+  alt: string;
+  title?: string;
+}
+
+const { src, alt, title } = Astro.props;
+
+/**
+ * Most screenshots on this site are 400–1000px wide. Stretching them to the column made them
+ * blurry, so an image grows to at most 1.25× its own pixels, and the frame fits around it.
+ */
+const natural = typeof src === 'string' ? undefined : src.width;
+const shown = natural ? Math.min(Math.round(natural * 1.25), 780) : undefined;
+---
+
+<Frame caption={title ?? alt} width={shown} class="exhibit">
+  {
+    typeof src === 'string' ? (
+      <img src={src} alt={alt} loading="lazy" decoding="async" />
+    ) : (
+      <Image src={src} alt={alt} widths={[Math.min(shown!, natural!), natural!]} sizes={`(min-width: 860px) ${shown}px, 100vw`} />
+    )
+  }
+</Frame>

@@ -15,5 +15,12 @@ export default defineConfig({
       weights: ['400 800'],
       fallbacks: ['system-ui', 'sans-serif'],
     },
+    {
+      provider: fontProviders.fontsource(),
+      name: 'Limelight',
+      cssVariable: '--font-display',
+      weights: [400],
+      fallbacks: ['Georgia', 'serif'],
+    },
   ],
 });

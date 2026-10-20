@@ -1,20 +1,25 @@
 ---
+import { chevronBand, fanScales } from '../lib/patterns';
+
 interface Props {
   current?: 'home' | 'projects';
   compact?: boolean;
 }
 
 const { current, compact = false } = Astro.props;
+const pattern = fanScales('#0f1a2c', 'rgba(201,162,74,0.2)');
+const band = chevronBand('#c9a24a');
 ---
 
-<div class:list={['hero', { compact }]}>
+<div class:list={['hero', { compact }]} style={`--pattern:${pattern};--band:${band}`}>
   <header class="wrap header">
     <a class="logo" href="/">
-      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
-        <path d="M2 24L14 2l12 22z" fill="var(--orange)"></path>
-        <path d="M14 2l12 22H14z" fill="var(--yellow)"></path>
+      <svg width="34" height="30" viewBox="0 0 34 30" aria-hidden="true">
+        <path d="M17 22L3 8M17 22L9 3M17 22V1M17 22l8-19M17 22L31 8" stroke="var(--gold)" stroke-width="1.5"></path>
+        <path d="M8 22a9 9 0 0 1 18 0z" fill="var(--coral)"></path>
+        <path d="M2 22h30v3H2zM6 25h22v4H6z" fill="var(--gold)"></path>
       </svg>
-      pixelized.me
+      <span>pixelized<span class="dot">.</span>me</span>
     </a>
     <nav aria-label="Main">
       <ul>
@@ -28,13 +33,18 @@ const { current, compact = false } = Astro.props;
     <div class="text"><slot /></div>
     <slot name="art" />
   </div>
+  <div class="band" aria-hidden="true"></div>
 </div>
 
 <style>
   .hero {
+    position: relative;
     overflow: hidden;
-    background: var(--blue);
-    color: var(--white);
+    background-color: var(--navy);
+    background-image:
+      linear-gradient(90deg, var(--navy) 0%, rgb(15 26 44 / 0.92) 45%, rgb(15 26 44 / 0.55) 100%),
+      var(--pattern);
+    color: var(--on-dark);
   }
 
   .header {
@@ -43,26 +53,31 @@ const { current, compact = false } = Astro.props;
     gap: 16px;
     justify-content: space-between;
     align-items: center;
-    padding-block: 16px;
+    padding-block: 18px;
+    border-bottom: 1px solid rgb(201 162 74 / 0.35);
   }
 
   .logo {
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 1.25rem;
-    font-weight: 800;
+    gap: 12px;
+    font-family: var(--font-display);
+    font-size: 1.375rem;
+    letter-spacing: 0.02em;
     text-decoration: none;
+  }
+
+  .dot {
+    color: var(--gold);
   }
 
   ul {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 4px;
     margin: 0;
     padding: 0;
     list-style: none;
-    font-weight: 600;
   }
 
   nav a {
@@ -70,44 +85,63 @@ const { current, compact = false } = Astro.props;
     align-items: center;
     min-height: 44px;
     padding: 10px 16px;
-    border-radius: 999px;
+    border: 1.5px solid transparent;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
     text-decoration: none;
+    text-transform: uppercase;
   }
 
   nav a:hover,
   nav a[aria-current='page'] {
-    background: var(--blue-light);
+    color: var(--gold-light);
+  }
+
+  nav a[aria-current='page'] {
+    border-bottom-color: var(--gold);
   }
 
   nav .contact {
-    padding-inline: 18px;
-    background: var(--white);
-    color: var(--ink);
+    margin-left: 8px;
+    border-color: var(--gold);
+    color: var(--gold-light);
   }
 
   nav .contact:hover {
-    background: var(--yellow);
+    background: var(--gold);
+    color: var(--navy);
   }
 
   .body {
+    position: relative;
     display: flex;
     gap: 32px;
     justify-content: space-between;
     align-items: flex-end;
-    padding-top: 24px;
+    padding-top: 56px;
   }
 
   .text {
     flex: 1 1 auto;
     min-width: 0;
-    padding-bottom: 56px;
+    padding-bottom: 72px;
   }
 
   .compact .body {
-    padding-top: 8px;
+    padding-top: 32px;
   }
 
   .compact .text {
-    padding-bottom: 40px;
+    padding-bottom: 48px;
+  }
+
+  .band {
+    height: 14px;
+    background-color: var(--navy);
+    background-image: var(--band);
+    background-repeat: repeat-x;
+    border-top: 2px solid var(--gold);
+    box-shadow: 0 4px 0 0 var(--navy), 0 6px 0 0 var(--gold);
   }
 </style>

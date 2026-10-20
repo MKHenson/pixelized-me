@@ -3,19 +3,24 @@ import Layout from '../../layouts/Layout.astro';
 import Hero from '../../components/Hero.astro';
 import ProjectTile from '../../components/ProjectTile.astro';
 import SiteFooter from '../../components/SiteFooter.astro';
+import DecoMotif from '../../components/DecoMotif.astro';
 import { getProjects } from '../../lib/projects';
+import { diamondLattice } from '../../lib/patterns';
 
 const projects = await getProjects();
 const tags = [...new Set(projects.flatMap((p) => p.data.tags))].sort();
+const texture = diamondLattice('rgba(201,162,74,0.16)', 40);
 ---
 
 <Layout title="Work" description="Games, engines and tools I've built, newest first.">
   <Hero current="projects" compact>
     <h1>Work</h1>
     <p class="intro">Games, engines and tools I've built, newest first.</p>
+    <DecoMotif slot="art" seed="work" kind="fan" class="art" />
   </Hero>
 
-  <main id="main" class="wrap section">
+  <main id="main" style={`--texture:${texture}`}>
+  <div class="wrap section">
     <div class="filters" role="group" aria-label="Filter by tag">
       <button type="button" data-filter="all" aria-pressed="true">All</button>
       {
@@ -35,6 +40,7 @@ const tags = [...new Set(projects.flatMap((p) => p.data.tags))].sort();
         ))
       }
     </ul>
+  </div>
   </main>
 
   <SiteFooter />
@@ -57,19 +63,36 @@ const tags = [...new Set(projects.flatMap((p) => p.data.tags))].sort();
 
 <style>
   h1 {
-    font-size: clamp(2.5rem, 5vw, 4rem);
-    letter-spacing: -0.035em;
+    font-size: clamp(2.75rem, 6vw, 4.75rem);
   }
 
   .intro {
     max-width: 560px;
-    margin-top: 12px;
-    color: var(--on-blue-muted);
+    margin-top: 16px;
+    color: var(--on-dark-muted);
     font-size: 1.125rem;
   }
 
+  :global(.hero .art) {
+    flex: 0 0 auto;
+    width: clamp(220px, 28vw, 340px);
+    margin-bottom: -2px;
+  }
+
+  @media (max-width: 700px) {
+    :global(.hero .art) {
+      display: none;
+    }
+  }
+
+  main {
+    background:
+      linear-gradient(90deg, transparent, var(--paper) 18%, var(--paper) 82%, transparent),
+      var(--texture) var(--paper);
+  }
+
   .section {
-    padding-block: 32px 64px;
+    padding-block: 40px 72px;
   }
 
   .filters {
@@ -82,29 +105,31 @@ const tags = [...new Set(projects.flatMap((p) => p.data.tags))].sort();
   button {
     min-height: 44px;
     padding: 8px 18px;
-    border: 2px solid var(--ink);
-    border-radius: 999px;
+    border: 1.5px solid var(--navy);
     background: transparent;
-    color: var(--ink);
+    color: var(--navy);
     font: inherit;
-    font-weight: 600;
-    text-transform: capitalize;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
     cursor: pointer;
   }
 
   button:hover {
-    background: var(--white);
+    background: var(--cream);
   }
 
   button[aria-pressed='true'] {
-    background: var(--ink);
-    color: var(--white);
+    border-color: var(--navy);
+    background: var(--navy);
+    color: var(--gold-light);
   }
 
   .tiles {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
-    gap: 16px;
+    gap: 24px;
     margin: 0;
     padding: 0;
     list-style: none;

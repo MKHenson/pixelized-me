@@ -1,12 +1,15 @@
 ---
 import { render } from 'astro:content';
-import { Image } from 'astro:assets';
 import Layout from '../../layouts/Layout.astro';
 import Hero from '../../components/Hero.astro';
 import SiteFooter from '../../components/SiteFooter.astro';
 import YouTube from '../../components/YouTube.astro';
 import GoogleSlides from '../../components/GoogleSlides.astro';
+import Exhibit from '../../components/Exhibit.astro';
+import DecoMotif from '../../components/DecoMotif.astro';
+import DecoRule from '../../components/DecoRule.astro';
 import { getProjects, statusLabel, yearsOf, type Project } from '../../lib/projects';
+import { diamondLattice } from '../../lib/patterns';
 
 export async function getStaticPaths() {
   const projects = await getProjects();
@@ -25,60 +28,50 @@ interface Props {
 const { project, newer, older } = Astro.props;
 const { Content } = await render(project);
 const { title, summary, cover, coverAlt, gallery, links, tags } = project.data;
+
+// Show the cover only when the write-up does not already include it.
+const coverStem = cover.src.split('?')[0].split('/').pop()!.split('.')[0];
+const showCover = !project.body?.includes(`./${coverStem}.`);
+const texture = diamondLattice('rgba(201,162,74,0.16)', 40);
 ---
 
 <Layout title={title} description={summary}>
   <Hero current="projects" compact>
-    <p class="crumb"><a href="/projects/">← All work</a></p>
+    <p class="crumb"><a href="/projects/" class="label">← All work</a></p>
     <h1>{title}</h1>
     <p class="summary">{summary}</p>
+    <dl class="facts">
+      <div><dt class="label">Status</dt><dd>{statusLabel(project)}</dd></div>
+      <div><dt class="label">Year</dt><dd>{yearsOf(project)}</dd></div>
+      {
+        tags.length > 0 && (
+          <div>
+            <dt class="label">Tags</dt>
+            <dd class="tags">{tags.join(' · ')}</dd>
+          </div>
+        )
+      }
+      {
+        links.length > 0 && (
+          <div>
+            <dt class="label">Links</dt>
+            <dd class="links">
+              {links.map((link) => (
+                <a href={link.url}>{link.label} ↗</a>
+              ))}
+            </dd>
+          </div>
+        )
+      }
+    </dl>
+    <DecoMotif slot="art" seed={project.id} class="art" />
   </Hero>
 
-  <main id="main">
-    <div class="wrap specimen">
-      <Image
-        src={cover}
-        alt={coverAlt}
-        widths={[640, 960, 1280]}
-        sizes="(min-width: 1100px) 780px, 100vw"
-        class="cover"
-        loading="eager"
-      />
-      <dl class="facts">
-        <div><dt>Status</dt><dd>{statusLabel(project)}</dd></div>
-        <div><dt>Year</dt><dd>{yearsOf(project)}</dd></div>
-        {
-          tags.length > 0 && (
-            <div>
-              <dt>Tags</dt>
-              <dd class="tags">{tags.join(', ')}</dd>
-            </div>
-          )
-        }
-        {
-          links.length > 0 && (
-            <div>
-              <dt>Links</dt>
-              <dd>
-                <ul class="links">
-                  {links.map((link) => (
-                    <li>
-                      <a href={link.url}>{link.label} ↗</a>
-                    </li>
-                  ))}
-                </ul>
-              </dd>
-            </div>
-          )
-        }
-      </dl>
-    </div>
-
-    <div class="wrap">
-      <article class="prose">
-        <Content components={{ YouTube, GoogleSlides }} />
-      </article>
-    </div>
+  <main id="main" class="page" style={`--texture:${texture}`}>
+    <article class="wrap prose">
+      {showCover && <Exhibit src={cover} alt={coverAlt} />}
+      <Content components={{ img: Exhibit, YouTube, GoogleSlides }} />
+    </article>
 
     {
       gallery.length > 0 && (
@@ -87,7 +80,7 @@ const { title, summary, cover, coverAlt, gallery, links, tags } = project.data;
           <ul class="gallery">
             {gallery.map((item) => (
               <li>
-                <Image src={item.src} alt={item.alt} widths={[480, 960]} sizes="(min-width: 900px) 50vw, 100vw" />
+                <Exhibit src={item.src} alt={item.alt} />
               </li>
             ))}
           </ul>
@@ -95,26 +88,29 @@ const { title, summary, cover, coverAlt, gallery, links, tags } = project.data;
       )
     }
 
-    <nav class="wrap pager" aria-label="More projects">
-      {
-        newer ? (
-          <a href={`/projects/${newer.id}/`} rel="prev">
-            <span class="pager-label">← Newer</span>
-            <span class="pager-title">{newer.data.title}</span>
-          </a>
-        ) : (
-          <span />
-        )
-      }
-      {
-        older && (
-          <a href={`/projects/${older.id}/`} rel="next" class="older">
-            <span class="pager-label">Older →</span>
-            <span class="pager-title">{older.data.title}</span>
-          </a>
-        )
-      }
-    </nav>
+    <div class="wrap">
+      <DecoRule />
+      <nav class="pager" aria-label="More projects">
+        {
+          newer ? (
+            <a href={`/projects/${newer.id}/`} rel="prev" class="stepped">
+              <span class="label">← Newer</span>
+              <span class="pager-title">{newer.data.title}</span>
+            </a>
+          ) : (
+            <span />
+          )
+        }
+        {
+          older && (
+            <a href={`/projects/${older.id}/`} rel="next" class="stepped older">
+              <span class="label">Older →</span>
+              <span class="pager-title">{older.data.title}</span>
+            </a>
+          )
+        }
+      </nav>
+    </div>
   </main>
 
   <SiteFooter />
@@ -122,14 +118,14 @@ const { title, summary, cover, coverAlt, gallery, links, tags } = project.data;
 
 <style>
   .crumb {
-    margin-bottom: 16px;
-    font-weight: 600;
+    margin-bottom: 20px;
   }
 
   .crumb a {
     display: inline-flex;
     align-items: center;
     min-height: 44px;
+    color: var(--gold-light);
     text-decoration: none;
   }
 
@@ -138,56 +134,41 @@ const { title, summary, cover, coverAlt, gallery, links, tags } = project.data;
   }
 
   h1 {
-    font-size: clamp(2.5rem, 5vw, 4rem);
-    letter-spacing: -0.035em;
+    max-width: 18ch;
+    font-size: clamp(2.5rem, 5vw, 4.25rem);
+    text-wrap: balance;
   }
 
   .summary {
-    max-width: 640px;
-    margin-top: 12px;
-    color: var(--on-blue-muted);
+    max-width: 560px;
+    margin-top: 18px;
+    color: var(--on-dark-muted);
     font-size: 1.125rem;
-  }
-
-  .specimen {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 24px;
-    align-items: flex-start;
-    padding-block: 32px 0;
-  }
-
-  .cover {
-    flex: 2 1 520px;
-    min-width: 0;
-    max-width: 960px;
-    width: 100%;
-    height: auto;
-    border-radius: var(--radius);
   }
 
   .facts {
-    flex: 1 1 240px;
-    max-width: 360px;
     display: flex;
-    flex-direction: column;
-    gap: 14px;
-    margin: 0;
-    padding: 20px 24px;
-    border-radius: var(--radius);
-    background: var(--yellow);
+    flex-wrap: wrap;
+    gap: 12px 0;
+    margin: 32px 0 0;
+  }
+
+  .facts > div {
+    padding: 2px 24px;
+    border-left: 1px solid rgb(201 162 74 / 0.5);
+  }
+
+  .facts > div:first-child {
+    padding-left: 0;
+    border-left: 0;
   }
 
   dt {
-    font-size: 0.8125rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+    color: var(--gold);
   }
 
   dd {
-    margin: 2px 0 0;
-    font-size: 1.125rem;
+    margin: 4px 0 0;
     font-weight: 600;
   }
 
@@ -196,89 +177,136 @@ const { title, summary, cover, coverAlt, gallery, links, tags } = project.data;
   }
 
   .links {
-    margin: 0;
-    padding: 0;
-    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
   }
 
   .links a {
-    display: inline-block;
-    padding-block: 6px;
+    color: var(--gold-light);
   }
 
+  :global(.hero .art) {
+    flex: 0 0 auto;
+    width: clamp(260px, 36vw, 440px);
+    margin-bottom: -2px;
+  }
+
+  @media (max-width: 760px) {
+    :global(.hero .art) {
+      position: absolute;
+      right: -40px;
+      bottom: 0;
+      width: 300px;
+      opacity: 0.35;
+    }
+  }
+
+  /* The lattice shows in the margins. The reading column sits on plain paper. */
+  .page {
+    padding-top: 56px;
+    background:
+      linear-gradient(90deg, transparent, var(--paper) 18%, var(--paper) 82%, transparent),
+      var(--texture) var(--paper);
+  }
+
+  /* One centred reading column. Framed media may grow wider than the text. */
   .prose {
-    max-width: 760px;
-    padding-block: 40px;
+    display: grid;
+    grid-template-columns:
+      [wide-start] minmax(0, 1fr)
+      [text-start] min(var(--prose-width), 100%)
+      [text-end] minmax(0, 1fr)
+      [wide-end];
+    row-gap: 1.25em;
+    padding-bottom: 56px;
     color: var(--ink-muted);
     font-size: 1.0625rem;
-    line-height: 1.65;
+    line-height: 1.7;
   }
 
-  .prose :global(> * + *) {
-    margin-top: 1.25em;
+  .prose > :global(*) {
+    grid-column: text;
+  }
+
+  .prose > :global(.frame) {
+    grid-column: wide;
+    justify-self: center;
+    width: min(100%, 860px);
+    margin-block: 1em;
+  }
+
+  .prose > :global(.frame.sized) {
+    width: auto;
+    max-width: 100%;
   }
 
   .prose :global(h2) {
-    margin-top: 1.75em;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 1em;
     color: var(--ink);
-    font-size: 1.75rem;
+    font-size: clamp(1.75rem, 3vw, 2.25rem);
+  }
+
+  .prose :global(h2)::before {
+    content: '';
+    flex: 0 0 auto;
+    width: 14px;
+    height: 14px;
+    background: var(--coral);
+    transform: rotate(45deg);
+  }
+
+  .prose :global(h2)::after {
+    content: '';
+    flex: 1 1 auto;
+    height: 5px;
+    border-block: 1.5px solid var(--gold);
   }
 
   .prose :global(h3) {
-    margin-top: 1.5em;
+    margin-top: 0.75em;
     color: var(--ink);
-    font-size: 1.5rem;
+    font-size: 1.375rem;
   }
 
   .prose :global(a) {
-    color: var(--blue);
+    color: var(--teal);
+    text-decoration-color: var(--gold);
     text-decoration-thickness: 2px;
     text-underline-offset: 4px;
   }
 
-  .prose :global(img),
-  .prose :global(youtube-embed),
-  .prose :global(.slides) {
-    width: 100%;
-    height: auto;
-    overflow: hidden;
-    border-radius: var(--radius);
-  }
-
   .prose :global(ul),
   .prose :global(ol) {
+    margin: 0;
     padding-left: 1.25em;
   }
 
   .prose :global(code) {
     padding: 2px 6px;
-    border-radius: 6px;
-    background: var(--white);
+    background: var(--cream);
     font-size: 0.9em;
   }
 
   .gallery-section {
-    padding-bottom: 40px;
+    padding-bottom: 56px;
   }
 
   .gallery-section h2 {
-    margin-bottom: 20px;
-    font-size: 1.75rem;
+    margin-bottom: 24px;
+    font-size: 2rem;
   }
 
   .gallery {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr));
-    gap: 20px;
+    gap: 24px;
     margin: 0;
     padding: 0;
     list-style: none;
-  }
-
-  .gallery :global(img) {
-    width: 100%;
-    height: auto;
-    border-radius: var(--radius);
   }
 
   .pager {
@@ -286,23 +314,27 @@ const { title, summary, cover, coverAlt, gallery, links, tags } = project.data;
     flex-wrap: wrap;
     justify-content: space-between;
     gap: 16px;
-    padding-bottom: 56px;
+    padding-block: 32px 64px;
   }
 
   .pager a {
+    --step: 8px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
     min-width: 0;
-    padding: 20px 28px;
-    border: 2px solid var(--ink);
-    border-radius: var(--radius);
+    padding: 20px 32px;
+    background: var(--navy);
+    color: var(--on-dark);
     text-decoration: none;
   }
 
+  .pager a .label {
+    color: var(--gold);
+  }
+
   .pager a:hover {
-    background: var(--ink);
-    color: var(--white);
+    background: var(--teal);
   }
 
   .older {
@@ -310,13 +342,8 @@ const { title, summary, cover, coverAlt, gallery, links, tags } = project.data;
     text-align: right;
   }
 
-  .pager-label {
-    font-size: 0.875rem;
-    font-weight: 600;
-  }
-
   .pager-title {
+    font-family: var(--font-display);
     font-size: 1.5rem;
-    font-weight: 800;
   }
 </style>

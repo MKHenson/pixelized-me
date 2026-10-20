@@ -1,0 +1,81 @@
+---
+import { diamondLattice } from '../lib/patterns';
+
+interface Props {
+  /** Text on the plate under the frame. */
+  caption?: string;
+  /** Width of the framed content in CSS pixels. The frame then fits it. Without it, the frame fills its column. */
+  width?: number;
+  class?: string;
+}
+
+const { caption, width, class: className } = Astro.props;
+const panel = diamondLattice('rgba(201,162,74,0.22)');
+---
+
+<figure class:list={['frame', className, { sized: width }]}>
+  <div class="outer stepped">
+    <div class="panel stepped" style={`background-image:${panel}`}>
+      <div class="content" style={width ? `width:${width}px` : undefined}>
+        <slot />
+      </div>
+    </div>
+  </div>
+  {
+    caption && (
+      <figcaption>
+        <span class="label">{caption}</span>
+      </figcaption>
+    )
+  }
+</figure>
+
+<style>
+  .frame {
+    margin: 0;
+  }
+
+  .outer {
+    --step: 12px;
+    padding: 2px;
+    background: var(--gold);
+  }
+
+  .panel {
+    --step: 11px;
+    display: flex;
+    justify-content: center;
+    padding: clamp(20px, 4vw, 44px);
+    background-color: var(--navy);
+  }
+
+  .content {
+    width: 100%;
+    max-width: 100%;
+    /* A gold hairline, a navy gap, then a second gold line: the double rule around the picture. */
+    box-shadow:
+      0 0 0 1px var(--gold),
+      0 0 0 6px var(--navy),
+      0 0 0 7px var(--gold-light);
+  }
+
+  .content > :global(img),
+  .content > :global(youtube-embed),
+  .content > :global(.slides) {
+    width: 100%;
+    height: auto;
+  }
+
+  figcaption {
+    display: flex;
+    justify-content: center;
+    margin-top: -1px;
+  }
+
+  figcaption .label {
+    padding: 8px 20px;
+    background: var(--gold);
+    color: var(--navy);
+    clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 100%, 12px 100%);
+  }
+</style>

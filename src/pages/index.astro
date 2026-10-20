@@ -3,51 +3,95 @@ import { Image } from 'astro:assets';
 import Layout from '../layouts/Layout.astro';
 import me from '../assets/me.jpg';
 import Hero from '../components/Hero.astro';
-import PolyArt from '../components/PolyArt.astro';
-import ProjectTile from '../components/ProjectTile.astro';
+import DecoMotif from '../components/DecoMotif.astro';
+import DecoRule from '../components/DecoRule.astro';
 import SiteFooter from '../components/SiteFooter.astro';
-import { getFeaturedProjects, getProjects } from '../lib/projects';
+import { getProjects, statusLabel, yearsOf } from '../lib/projects';
+import { diamondLattice, fanScales } from '../lib/patterns';
+import { technologyGroups } from '../data/technologies';
 
-const featured = await getFeaturedProjects(6);
-const total = (await getProjects()).length;
-
-/** Rows of two alternate wide|narrow and narrow|wide; an unpaired last tile spans the row. */
-function spanOf(i: number) {
-  if (i === featured.length - 1 && featured.length % 2 === 1) return 3;
-  const wideFirst = Math.floor(i / 2) % 2 === 0;
-  return wideFirst === (i % 2 === 0) ? 2 : 1;
-}
+const projects = await getProjects();
+const featured = projects.filter((p) => p.data.featured).sort((a, b) => a.data.order - b.data.order);
+const texture = diamondLattice('rgba(201,162,74,0.16)', 40);
+const tealScales = fanScales('#10454a', 'rgba(228,199,126,0.22)', 40);
 ---
 
 <Layout title="pixelized.me">
   <Hero current="home">
+    <p class="label kicker">Mathew Henson</p>
     <h1>Code, polygons &amp; playable worlds.</h1>
     <p class="intro">[One or two lines about what you do and what you care about.]</p>
-    <PolyArt slot="art" />
+    <DecoMotif slot="art" seed="home" kind="sunrise" accent="var(--coral)" class="art" />
   </Hero>
 
-  <main id="main">
-    <section class="wrap section" aria-labelledby="work-heading">
+  <main id="main" style={`--texture:${texture}`}>
+    <section class="wrap section" aria-labelledby="featured-heading">
       <div class="section-head">
-        <h2 id="work-heading">Things I've made</h2>
-        <a class="pill" href="/projects/">All {total} projects →</a>
+        <h2 id="featured-heading">Featured</h2>
+        <a class="pill" href="/projects/">All {projects.length} projects →</a>
       </div>
-      <ul class="tiles">
+      <ul class="featured">
         {
-          featured.map((project, i) => (
-            <li data-span={spanOf(i)}>
-              <ProjectTile project={project} index={i} variant="feature" wide={spanOf(i) > 1} />
+          featured.map((project) => (
+            <li class="feature">
+              <div class="feature-media stepped">
+                <Image
+                  src={project.data.cover}
+                  alt={project.data.coverAlt}
+                  widths={[640, 960, 1280, 1680]}
+                  sizes="(min-width: 1184px) 680px, (min-width: 900px) 60vw, 100vw"
+                />
+              </div>
+              <div class="feature-body">
+                <p class="label meta">
+                  {statusLabel(project)} · {yearsOf(project)}
+                </p>
+                <h3>
+                  <a href={`/projects/${project.id}/`}>{project.data.title}</a>
+                </h3>
+                <p class="summary">{project.data.summary}</p>
+                <span class="label more" aria-hidden="true">
+                  Read more →
+                </span>
+              </div>
             </li>
           ))
         }
       </ul>
     </section>
 
+    <div class="wrap"><DecoRule /></div>
+
     <section id="about" class="wrap section about" aria-labelledby="about-heading">
-      <Image src={me} alt="Mathew Henson" width={240} height={240} densities={[1, 2, 3]} class="photo" />
+      <div class="portrait">
+        <Image src={me} alt="Mathew Henson" width={300} height={380} densities={[1, 2]} />
+      </div>
       <div class="about-body">
+        <p class="label kicker-dark">About</p>
         <h2 id="about-heading">Hi, I'm Mat.</h2>
         <p>[A short bio: where you've worked, what you build, what you're into outside code.]</p>
+      </div>
+    </section>
+
+    <section class="tech" aria-labelledby="tech-heading" style={`--scales:${tealScales}`}>
+      <div class="wrap">
+        <div class="section-head">
+          <h2 id="tech-heading">Technologies</h2>
+        </div>
+        <ul class="tech-grid">
+          {
+            technologyGroups.map((group) => (
+              <li class="tech-group stepped">
+                <h3 class="label">{group.title}</h3>
+                <ul class="tech-items">
+                  {group.items.map((item) => (
+                    <li>{item}</li>
+                  ))}
+                </ul>
+              </li>
+            ))
+          }
+        </ul>
       </div>
     </section>
   </main>
@@ -56,26 +100,52 @@ function spanOf(i: number) {
 </Layout>
 
 <style>
+  .kicker {
+    margin-bottom: 20px;
+    color: var(--gold);
+  }
+
   h1 {
-    max-width: 14ch;
-    font-size: clamp(2.5rem, 5vw, 4.5rem);
-    line-height: 0.95;
-    letter-spacing: -0.035em;
+    max-width: 13ch;
+    font-size: clamp(2.75rem, 6vw, 5rem);
+    line-height: 1;
   }
 
   .intro {
     max-width: 520px;
-    margin-top: 16px;
-    color: var(--on-blue-muted);
+    margin-top: 20px;
+    color: var(--on-dark-muted);
     font-size: 1.125rem;
   }
 
+  :global(.hero .art) {
+    flex: 0 1 auto;
+    width: clamp(300px, 46vw, 560px);
+    margin-bottom: -2px;
+  }
+
+  @media (max-width: 760px) {
+    :global(.hero .art) {
+      position: absolute;
+      right: -60px;
+      bottom: 0;
+      width: 320px;
+      opacity: 0.35;
+    }
+  }
+
+  main {
+    background:
+      linear-gradient(90deg, transparent, var(--paper) 18%, var(--paper) 82%, transparent),
+      var(--texture) var(--paper);
+  }
+
   .section {
-    padding-block: 48px;
+    padding-block: 64px;
   }
 
   h2 {
-    font-size: 2.25rem;
+    font-size: clamp(2rem, 3.5vw, 2.75rem);
   }
 
   .section-head {
@@ -84,67 +154,201 @@ function spanOf(i: number) {
     justify-content: space-between;
     align-items: center;
     gap: 16px;
-    margin-bottom: 24px;
+    margin-bottom: 32px;
   }
 
   .section-head .pill:hover {
-    background: var(--ink);
-    color: var(--white);
+    background: var(--navy);
+    color: var(--on-dark);
   }
 
-  .tiles {
+  .featured {
     display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 16px;
+    gap: 32px;
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  @media (min-width: 800px) {
-    .tiles {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+  .feature {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    background: var(--navy);
+    color: var(--on-dark);
+    border: 2px solid var(--gold);
+    box-shadow: 0 0 0 5px var(--paper), 0 0 0 6px var(--gold);
+  }
+
+  .feature-media {
+    --step: 0px;
+    overflow: hidden;
+    border-right: 2px solid var(--gold);
+  }
+
+  .feature-media :global(img) {
+    width: 100%;
+    height: 100%;
+    min-height: 320px;
+    object-fit: cover;
+  }
+
+  .feature-body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 40px 36px;
+  }
+
+  .meta,
+  .more {
+    color: var(--gold);
+  }
+
+  .feature h3 {
+    font-family: var(--font-display);
+    font-size: clamp(2.25rem, 4vw, 3.25rem);
+    font-weight: 400;
+  }
+
+  .feature h3 a {
+    text-decoration: none;
+  }
+
+  .feature h3 a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  .summary {
+    color: var(--on-dark-muted);
+    font-size: 1.0625rem;
+  }
+
+  .more {
+    margin-top: auto;
+    padding-top: 16px;
+  }
+
+  .feature:has(a:hover) .more {
+    color: var(--gold-light);
+    text-decoration: underline;
+  }
+
+  @media (max-width: 860px) {
+    .feature {
+      grid-template-columns: minmax(0, 1fr);
     }
 
-    .tiles > [data-span='2'] {
-      grid-column: span 2;
+    .feature-media {
+      border-right: 0;
+      border-bottom: 2px solid var(--gold);
     }
 
-    .tiles > [data-span='3'] {
-      grid-column: span 3;
+    .feature-media :global(img) {
+      min-height: 0;
+      aspect-ratio: 16 / 9;
     }
   }
 
   .about {
     display: flex;
     flex-wrap: wrap;
-    gap: 32px;
+    gap: 48px;
     align-items: center;
-    padding-top: 16px;
   }
 
-  .photo {
+  /* An arched portrait, the shape of a deco doorway. */
+  .portrait {
     flex: 0 0 auto;
-    width: clamp(220px, 30vw, 300px);
+    width: clamp(220px, 28vw, 300px);
+    padding: 8px;
+    border: 2px solid var(--gold);
+    border-radius: 999px 999px 0 0;
+    background: var(--navy);
+  }
+
+  .portrait :global(img) {
+    width: 100%;
     height: auto;
-    aspect-ratio: 1;
+    aspect-ratio: 300 / 380;
     object-fit: cover;
-    border: 6px solid var(--pink);
-    border-radius: 50%;
-    background: var(--pink);
+    border-radius: 999px 999px 0 0;
   }
 
   .about-body {
-    flex: 1 1 480px;
-    max-width: 760px;
+    flex: 1 1 420px;
+    max-width: var(--prose-width);
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
     color: var(--ink-muted);
     font-size: 1.125rem;
   }
 
+  .kicker-dark {
+    color: var(--coral);
+  }
+
   .about-body h2 {
     color: var(--ink);
+  }
+
+  .tech {
+    padding-block: 64px 72px;
+    background-color: var(--teal);
+    background-image:
+      linear-gradient(180deg, rgb(16 69 74 / 0.6), rgb(16 69 74 / 0.95)),
+      var(--scales);
+    color: var(--on-dark);
+    border-top: 2px solid var(--gold);
+  }
+
+  .tech-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .tech-group {
+    --step: 8px;
+    padding: 28px 28px 32px;
+    background: var(--navy);
+  }
+
+  .tech-group h3 {
+    padding-bottom: 14px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid rgb(201 162 74 / 0.5);
+    color: var(--gold);
+  }
+
+  .tech-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 1.0625rem;
+    font-weight: 600;
+  }
+
+  .tech-items li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .tech-items li::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    background: var(--coral);
+    transform: rotate(45deg);
   }
 </style>

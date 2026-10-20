@@ -1,0 +1,37 @@
+---
+interface Props {
+  /** Line colour. Any CSS colour. */
+  color?: string;
+  class?: string;
+}
+
+const { color = 'var(--gold)', class: className } = Astro.props;
+---
+
+<div class:list={['rule', className]} style={`--rule:${color}`} aria-hidden="true">
+  <span class="line"></span>
+  <svg width="88" height="20" viewBox="0 0 88 20">
+    <path d="M0 10h22M66 10h22" stroke="var(--rule)" stroke-width="1.5"></path>
+    <path d="M22 6h6v-4h6M22 14h6v4h6M66 6h-6v-4h-6M66 14h-6v4h-6" fill="none" stroke="var(--rule)" stroke-width="1.5"></path>
+    <path d="M44 1l9 9-9 9-9-9z" fill="var(--rule)"></path>
+  </svg>
+  <span class="line"></span>
+</div>
+
+<style>
+  .rule {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+
+  .line {
+    flex: 1 1 0;
+    height: 5px;
+    border-block: 1.5px solid var(--rule);
+  }
+
+  svg {
+    flex: 0 0 auto;
+  }
+</style>
