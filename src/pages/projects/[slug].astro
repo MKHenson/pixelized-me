@@ -38,7 +38,7 @@ const texture = diamondLattice('rgba(201,162,74,0.16)', 40);
 
 <Layout title={title} description={summary}>
   <Hero current="projects" compact>
-    <p class="crumb"><a href="/projects/" class="label">← All work</a></p>
+    <p class="crumb"><a href="/projects/" class="label">← All projects</a></p>
     <h1>{title}</h1>
     <p class="summary">{summary}</p>
     <dl class="facts">
@@ -197,8 +197,7 @@ const texture = diamondLattice('rgba(201,162,74,0.16)', 40);
 
   :global(.hero .art) {
     flex: 0 0 auto;
-    width: clamp(220px, 28vw, 350px);
-    margin-bottom: -2px;
+    width: clamp(220px, 28vw, 350px); 
   }
 
   @media (max-width: 760px) {

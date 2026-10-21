@@ -12,11 +12,11 @@ const tags = [...new Set(projects.flatMap((p) => p.data.tags))].sort();
 const texture = diamondLattice('rgba(201,162,74,0.16)', 40);
 ---
 
-<Layout title="Work" description="Games, engines and tools I've built, newest first.">
+<Layout title="Projects" description="Games, engines and tools I've built, newest first.">
   <Hero current="projects" compact>
-    <h1>Work</h1>
+    <h1>Projects</h1>
     <p class="intro">Games, engines and tools I've built, newest first.</p>
-    <DecoMotif slot="art" seed="work" kind="fan" class="art" />
+    <DecoMotif slot="art" seed="projects" kind="fan" class="art" />
   </Hero>
 
   <main id="main" style={`--texture:${texture}`}>
@@ -76,7 +76,6 @@ const texture = diamondLattice('rgba(201,162,74,0.16)', 40);
   :global(.hero .art) {
     flex: 0 0 auto;
     width: clamp(220px, 28vw, 340px);
-    margin-bottom: -2px;
   }
 
   @media (max-width: 700px) {
