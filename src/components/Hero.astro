@@ -122,7 +122,10 @@ const band = chevronBand('#c9a24a');
     padding-top: 56px;
   }
 
+  /* Keep the text above the art. On narrow screens the art is absolutely positioned behind it. */
   .text {
+    position: relative;
+    z-index: 1;
     flex: 1 1 auto;
     min-width: 0;
     padding-bottom: 72px;
